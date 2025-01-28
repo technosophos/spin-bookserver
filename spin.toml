@@ -1,0 +1,39 @@
+spin_manifest_version = 2
+
+[application]
+name = "bookserver"
+version = "0.1.0"
+authors = ["Matt Butcher <matt.butcher@fermyon.com>"]
+description = "A multi-component book service"
+
+[[trigger.http]]
+# Public route
+route = "/api"
+# Make the route private
+#route = { private = true }
+component = "book-api"
+
+[component.book-api]
+source = "book-api/target/book-api.wasm"
+allowed_outbound_hosts = []
+
+[component.book-api.build]
+command = "npm run build"
+workdir = "book-api"
+
+[[trigger.http]]
+route = "/"
+component = "frontend"
+
+[component.frontend]
+allowed_outbound_hosts = ["http://localhost:3000"]
+source = "frontend/app.wasm"
+
+# Declare application-specific variables
+[component.frontend.variables]
+book_api_url = "http://localhost:3000/api"
+
+[component.frontend.build]
+command = "componentize-py -w spin-http componentize app -o app.wasm"
+workdir = "frontend"
+watch = ["*.py", "requirements.txt"]
